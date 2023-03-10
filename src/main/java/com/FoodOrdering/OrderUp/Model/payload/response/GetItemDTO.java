@@ -1,4 +1,4 @@
-package com.FoodOrdering.OrderUp.Model.payload;
+package com.FoodOrdering.OrderUp.Model.payload.response;
 
 import com.FoodOrdering.OrderUp.Model.Item;
 import lombok.AllArgsConstructor;
@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GetItemDTO {
-    Item item ;
-    String image_url ;
-    Double rate_average;
+    private Item item ;
+    private String image_url ;
+    private Double rate_average;
+    private Double distance;
 }

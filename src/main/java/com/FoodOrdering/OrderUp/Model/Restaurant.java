@@ -10,13 +10,18 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Document(collection = "average_rating")
-public class AverageRating {
+@Document(collection = "restaurants")
+public class Restaurant {
 
     @Id
     private ObjectId _id;
-    private int num_rating;
-    private Double average_rating;
-    private ObjectId referenceId;
+    private String name;
+    private String email;
+    private String password;
+    private String status;
+    private String address_detail;
+    private Double address_long;
+    private Double address_lat;
+    private String phone;
 
 }

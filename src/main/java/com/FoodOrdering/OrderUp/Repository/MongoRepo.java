@@ -4,15 +4,24 @@ import com.FoodOrdering.OrderUp.Model.AverageRating;
 import com.FoodOrdering.OrderUp.Model.Item;
 
 import com.FoodOrdering.OrderUp.Model.Media;
+import com.FoodOrdering.OrderUp.Model.payload.request.AddItemRequest;
+import com.FoodOrdering.OrderUp.Model.payload.request.EditItemRequest;
+import com.FoodOrdering.OrderUp.Model.payload.request.OnOffItemRequest;
 import com.FoodOrdering.OrderUp.MongoConfig.MongoConfig;
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
+import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
+import javax.print.Doc;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,15 +33,18 @@ public class MongoRepo {
     @Autowired
     MongoClient mongoClient;
 
+    @Value("${spring.data.mongodb.database}")
+    String db;
+
     public MongoRepo(MongoClient mongoClient) {
         this.mongoClient = mongoClient;
     }
 
     public List<Item> getItem() {
-        MongoDatabase database = mongoClient.getDatabase("OrderUp");
-        MongoCollection<Document> colelction = database.getCollection("items");
+        MongoDatabase database = mongoClient.getDatabase(db);
+        MongoCollection<Document> collection = database.getCollection("items");
 
-        FindIterable<Document> iterable = colelction.find();
+        FindIterable<Document> iterable = collection.find();
 
         MongoCursor<Document> cursor = iterable.cursor();
 
@@ -63,7 +75,7 @@ return list;
         // get list item id
         List<ObjectId> listItemId = items.stream().map(i->i.get_id()).collect(Collectors.toList());
 
-        MongoDatabase mongoDatabase = mongoClient.getDatabase("OrderUp");
+        MongoDatabase mongoDatabase = mongoClient.getDatabase(db);
         MongoCollection<Document> collection = mongoDatabase.getCollection("media");
 
         Bson filters = Filters.in("referenceId",listItemId);
@@ -92,7 +104,7 @@ return list;
         //get list item id
         List<ObjectId> listItemId = items.stream().map(i->i.get_id()).collect(Collectors.toList());
 
-        MongoDatabase database= mongoClient.getDatabase("OrderUp");
+        MongoDatabase database= mongoClient.getDatabase(db);
         MongoCollection<Document> collection = database.getCollection("average_rating");
 
         Bson filter = Filters.in("referenceId",listItemId);
@@ -106,8 +118,8 @@ return list;
             String id = document.get("_id").toString();
             int numrating = document.get("num_rating",Integer.class);
             Double averagerating = document.get("average_rating",Double.class);
-
-            AverageRating averageRating = new AverageRating(new ObjectId(id),numrating,averagerating);
+            String referenceID  = document.get("referenceId").toString();
+            AverageRating averageRating = new AverageRating(new ObjectId(id),numrating,averagerating,new ObjectId(referenceID));
             averageRatingList.add(averageRating);
         }
 
@@ -133,7 +145,65 @@ return list;
     }
 
 
-}
+    public boolean addItem(AddItemRequest item) {
+        MongoDatabase database= mongoClient.getDatabase(db);
+        MongoCollection<Document> collection = database.getCollection("items");
+
+        // init
+        Document newitem = new Document();
+        newitem.append("name",item.getName());
+        newitem.append("detail",item.getDetail());
+        newitem.append("price",item.getPrice());
+        newitem.append("status","ON");
+        newitem.append("restaurant_id", new ObjectId(item.getRestaurant_id()));
+        newitem.append("ordered",0);
+
+        InsertOneResult insertOneResult = collection.insertOne(newitem);
+        if(insertOneResult.getInsertedId()!= null){
+            return true;
+        }
+
+        return false;
+
+    }
+
+    public boolean onoffitem(OnOffItemRequest onOffItemRequest) {
+
+        MongoDatabase database = mongoClient.getDatabase(db);
+        MongoCollection<Document> collection = database.getCollection("items");
+
+        Bson filter = Filters.eq("_id",new ObjectId(onOffItemRequest.get_id()));
+        Bson update = Updates.set("status",onOffItemRequest.getStatus());
+
+        UpdateResult updateResult= collection.updateOne(filter,update);
+
+        if(updateResult.getMatchedCount() == 1){
+            return true;
+        }
+        return  false;
+    }
+
+    public boolean editItem(EditItemRequest item) {
+
+
+        MongoDatabase database= mongoClient.getDatabase(db);
+        MongoCollection<Document> collection  = database.getCollection("items");
+
+
+        Bson filter = Filters.eq("_id",new ObjectId(item.get_id()));
+        Bson update = Updates.combine(
+                Updates.set("name",item.getName()),
+                Updates.set("detail",item.getDetail()),
+                Updates.set("price",item.getPrice())
+        );
+
+        UpdateResult updateResult= collection.updateOne(filter,update);
+            if(updateResult.getMatchedCount() == 1)
+                return true;
+
+        return false;
+
+}}
 
 
 
