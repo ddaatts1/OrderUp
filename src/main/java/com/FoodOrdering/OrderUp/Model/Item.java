@@ -2,13 +2,14 @@ package com.FoodOrdering.OrderUp.Model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import jakarta.persistence.Id;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import javax.persistence.Id;
 
 @Data
 @NoArgsConstructor

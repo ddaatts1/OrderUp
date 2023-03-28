@@ -13,5 +13,4 @@ public class AddRestaurantRequest {
     private String email;
     private String phone;
     private  String password;
-
 }

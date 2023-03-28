@@ -1,11 +1,10 @@
 package com.FoodOrdering.OrderUp.Controller;
 
+import com.FoodOrdering.OrderUp.Email.CreateOTP;
+import com.FoodOrdering.OrderUp.Email.EmailSenderService;
 import com.FoodOrdering.OrderUp.Model.Item;
-import com.FoodOrdering.OrderUp.Model.payload.request.AddItemRequest;
-import com.FoodOrdering.OrderUp.Model.payload.request.FindNearbyRequest;
+import com.FoodOrdering.OrderUp.Model.payload.request.*;
 import com.FoodOrdering.OrderUp.Model.payload.response.GetItemDTO;
-import com.FoodOrdering.OrderUp.Model.payload.request.EditItemRequest;
-import com.FoodOrdering.OrderUp.Model.payload.request.OnOffItemRequest;
 import com.FoodOrdering.OrderUp.Model.payload.response.CommonResponse;
 import com.FoodOrdering.OrderUp.Repository.ItemRepository;
 import com.FoodOrdering.OrderUp.Repository.MediaRepository;
@@ -16,15 +15,17 @@ import com.google.maps.DistanceMatrixApiRequest;
 import com.google.maps.GeoApiContext;
 import com.google.maps.model.*;
 import com.mongodb.client.*;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/OrderUp")
+@CrossOrigin(origins = "http://localhost:3000")
 public class Controller {
 
     @Value("${google.maps.api.key}")
@@ -41,11 +42,30 @@ public class Controller {
     ApplicationService applicationService;
 
     @Autowired
+    EmailSenderService emailSenderService;
+    @Autowired
     MongoRepo mongoRepo;
     @GetMapping("/test")
-    public void test(){
+    public void test() throws MessagingException {
 
-        List<Item> listItem = itemRepository.findAll();
+        String otp = new String(CreateOTP.OTP(4));
+        emailSenderService.sendSimpleEmail("dodat2632001@gmail.com",otp);
+
+    }
+
+
+    @PostMapping("/createOTP")
+    public String createOTP(@RequestParam String email ) {
+
+        String otp = new String(CreateOTP.OTP(4));
+
+        try{
+            emailSenderService.sendSimpleEmail(email,otp);
+
+        }catch (MessagingException e){
+
+        }
+        return otp;
 
     }
 
@@ -77,9 +97,9 @@ public class Controller {
 
 
     @GetMapping("/GET_ITEMS")
-    public  List<GetItemDTO> getlist(){
+    public  List<GetItemDTO> getlist(@RequestBody GetItemsRequest getItemsRequest){
 
-        List<GetItemDTO> items = applicationService.getListItem();
+        List<GetItemDTO> items = applicationService.getListItem(getItemsRequest);
 
         return  items;
     }
@@ -91,7 +111,6 @@ public class Controller {
         response = applicationService.findNearby(findNearbyRequest);
 
         return  response;
-
     }
 
 

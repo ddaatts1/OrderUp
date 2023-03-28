@@ -156,6 +156,7 @@ return list;
         newitem.append("price",item.getPrice());
         newitem.append("status","ON");
         newitem.append("restaurant_id", new ObjectId(item.getRestaurant_id()));
+        newitem.append("images", item.getImages());
         newitem.append("ordered",0);
 
         InsertOneResult insertOneResult = collection.insertOne(newitem);

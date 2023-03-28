@@ -10,6 +10,7 @@ import com.google.maps.model.GeocodingResult;
 import com.google.maps.model.TravelMode;
 import com.google.maps.model.Unit;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -44,6 +45,7 @@ public class GoogleApiService {
                 .destinations(destinations)
                 .mode(TravelMode.DRIVING)
                 .units(Unit.METRIC);
+
 
         // Execute the request
         DistanceMatrix distanceMatrix = request.await();

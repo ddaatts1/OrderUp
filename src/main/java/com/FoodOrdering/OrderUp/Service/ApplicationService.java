@@ -3,11 +3,8 @@ package com.FoodOrdering.OrderUp.Service;
 import com.FoodOrdering.OrderUp.Model.AverageRating;
 import com.FoodOrdering.OrderUp.Model.Item;
 import com.FoodOrdering.OrderUp.Model.Media;
-import com.FoodOrdering.OrderUp.Model.payload.request.AddItemRequest;
-import com.FoodOrdering.OrderUp.Model.payload.request.FindNearbyRequest;
+import com.FoodOrdering.OrderUp.Model.payload.request.*;
 import com.FoodOrdering.OrderUp.Model.payload.response.GetItemDTO;
-import com.FoodOrdering.OrderUp.Model.payload.request.EditItemRequest;
-import com.FoodOrdering.OrderUp.Model.payload.request.OnOffItemRequest;
 import com.FoodOrdering.OrderUp.Model.payload.response.CommonResponse;
 import com.FoodOrdering.OrderUp.Repository.ItemRepository;
 import com.FoodOrdering.OrderUp.Repository.MongoRepo;
@@ -27,15 +24,17 @@ public class ApplicationService {
     @Autowired
     ItemRepository itemRepository;
 
+    @Autowired
+    GoogleApiService googleApiService;
 
 
 
 
-    public List<GetItemDTO> getListItem(){
+    public List<GetItemDTO> getListItem(GetItemsRequest getItemsRequest){
         List<GetItemDTO> list = new ArrayList<>();
 
         // get list item
-        Page<Item> items = itemRepository.findAll(PageRequest.of(0,5));
+        Page<Item> items = itemRepository.findAll(PageRequest.of(getItemsRequest.getPage(), getItemsRequest.getSize()));
         List<Item> listItem = items.getContent();
 
         // get list media
