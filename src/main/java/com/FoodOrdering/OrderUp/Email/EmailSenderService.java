@@ -9,11 +9,11 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 
-
 @Service
 public class EmailSenderService {
     @Autowired
     private JavaMailSender mailSender;
+
 
     public void sendSimpleEmail(String toEmail,
                                 String OTP
@@ -45,6 +45,19 @@ public class EmailSenderService {
 
         mailSender.send(message);
         System.out.println("Mail Send...");
+    }
+
+
+
+    public boolean resendEmail(String email){
+        String otp = new String(CreateOTP.OTP(6));
+        try{
+            sendSimpleEmail(email,otp);
+        }catch (MessagingException e){
+            return false;
+        }
+        return true;
+
     }
 
 

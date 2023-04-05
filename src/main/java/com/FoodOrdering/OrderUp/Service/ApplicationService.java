@@ -8,13 +8,16 @@ import com.FoodOrdering.OrderUp.Model.payload.response.GetItemDTO;
 import com.FoodOrdering.OrderUp.Model.payload.response.CommonResponse;
 import com.FoodOrdering.OrderUp.Repository.ItemRepository;
 import com.FoodOrdering.OrderUp.Repository.MongoRepo;
+import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ApplicationService {
@@ -126,5 +129,58 @@ public class ApplicationService {
 
 
         return response;
+    }
+
+//    public Page<Item> adminGetListItems(String itemId,int page, int size) {
+//
+//        Page<Item> item = null ;
+//
+//       item =  itemRepository.findByRestaurantid(new ObjectId(itemId),PageRequest.of(page,size));
+//       item.getContent().stream().map((i)->{
+//           return new Document("_id",i.get_id().toString()).append("name",i.getName());
+//       });
+//        return item;
+//    }
+
+    public Page<Document> adminGetListItems(String itemId, int page, int size) {
+        Page<Item> items = itemRepository.findByRestaurantid(new ObjectId(itemId), PageRequest.of(page, size));
+        List<Document> documents = items.getContent().stream()
+                .map(i -> new Document("_id", i.get_id().toString())
+                        .append("name", i.getName())
+                        .append("price",i.getPrice())
+                        .append("status",i.getStatus())
+                )
+                .collect(Collectors.toList());
+        return new PageImpl<>(documents, items.getPageable(), items.getTotalElements());
+    }
+
+    public CommonResponse<Object> deleteItem(String id) {
+        CommonResponse<Object> response = new CommonResponse<>();
+
+try{
+    Optional<Item> deleteItem = itemRepository.findById(new ObjectId(id));
+
+    if(deleteItem.isPresent()){
+        itemRepository.delete(deleteItem.get());
+    }
+    else {
+        response.setData(id);
+        response.setCode(0);
+        response.setMessage("that bai");
+        return response;
+    }
+
+
+}catch (Exception e){
+    response.setData(id);
+    response.setCode(0);
+    response.setMessage("that bai");
+}
+        response.setData(id);
+        response.setCode(1);
+        response.setMessage("xoa thanh cong ");
+
+        return response;
+
     }
 }

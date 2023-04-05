@@ -132,15 +132,15 @@ return list;
 
     public static void main(String[] args) {
 
-        MongoConfig mongoConfig = new MongoConfig();
-        MongoRepo mongoRepo= new MongoRepo(mongoConfig.mongoClient());
-        List<Item> item = mongoRepo.getItem();
-
+//        MongoConfig mongoConfig = new MongoConfig();
+//        MongoRepo mongoRepo= new MongoRepo(mongoConfig.mongoClient());
+//        List<Item> item = mongoRepo.getItem();
+//
 //        List<Media> media = mongoRepo.geListMediaByListItem(item);
-        List<AverageRating> averageRatingList = mongoRepo.getListAverageRatingByListItem(item);
-
-
-        System.out.println(averageRatingList);
+//        List<AverageRating> averageRatingList = mongoRepo.getListAverageRatingByListItem(item);
+//
+//
+//        System.out.println(averageRatingList);
 
     }
 

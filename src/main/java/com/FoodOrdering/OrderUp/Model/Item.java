@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import javax.persistence.Id;
 
@@ -25,8 +26,7 @@ public class Item {
     private int price;
     private String status;
     private int ordered;
-    private  ObjectId restaurant_id;
-
-
+    @Field(name = "restaurant_id")
+    private  ObjectId restaurantid;
 
 }

@@ -3,29 +3,34 @@ package com.FoodOrdering.OrderUp.Controller;
 import com.FoodOrdering.OrderUp.Email.CreateOTP;
 import com.FoodOrdering.OrderUp.Email.EmailSenderService;
 import com.FoodOrdering.OrderUp.Model.Item;
+import com.FoodOrdering.OrderUp.Model.Restaurant;
 import com.FoodOrdering.OrderUp.Model.payload.request.*;
 import com.FoodOrdering.OrderUp.Model.payload.response.GetItemDTO;
 import com.FoodOrdering.OrderUp.Model.payload.response.CommonResponse;
 import com.FoodOrdering.OrderUp.Repository.ItemRepository;
 import com.FoodOrdering.OrderUp.Repository.MediaRepository;
 import com.FoodOrdering.OrderUp.Repository.MongoRepo;
+import com.FoodOrdering.OrderUp.Repository.RestaurantRepository;
 import com.FoodOrdering.OrderUp.Service.ApplicationService;
-import com.google.maps.DistanceMatrixApi;
-import com.google.maps.DistanceMatrixApiRequest;
-import com.google.maps.GeoApiContext;
-import com.google.maps.model.*;
+
+import com.FoodOrdering.OrderUp.config.JwtService;
 import com.mongodb.client.*;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/OrderUp")
 @CrossOrigin(origins = "http://localhost:3000")
+
 public class Controller {
 
     @Value("${google.maps.api.key}")
@@ -45,6 +50,12 @@ public class Controller {
     EmailSenderService emailSenderService;
     @Autowired
     MongoRepo mongoRepo;
+    @Autowired
+    JwtService jwtService;
+
+    @Autowired
+    RestaurantRepository restaurantRepository;
+
     @GetMapping("/test")
     public void test() throws MessagingException {
 
@@ -70,30 +81,7 @@ public class Controller {
     }
 
 
-    @PostMapping("/ADD_ITEM")
-    public CommonResponse<Object> addItem(@RequestBody(required = true) AddItemRequest item){
-        CommonResponse<Object> check = applicationService.addItem(item);
-        return check;
-    }
 
-
-    @PostMapping("/ON_OFF_ITEM")
-    public CommonResponse<Object> OnOffItem(@RequestBody OnOffItemRequest onOffItemRequest){
-        CommonResponse<Object> commonResponse = new CommonResponse<>();
-
-        commonResponse = applicationService.onnoffitem(onOffItemRequest);
-
-        return commonResponse;
-    }
-
-    @PostMapping("/EDIT_ITEM")
-    public CommonResponse<Object> EDIT_ITEM(@RequestBody EditItemRequest item){
-        CommonResponse<Object> response = new CommonResponse<>();
-
-        response = applicationService.editItem(item);
-
-        return response;
-    }
 
 
     @GetMapping("/GET_ITEMS")
@@ -112,6 +100,8 @@ public class Controller {
 
         return  response;
     }
+
+
 
 
 
