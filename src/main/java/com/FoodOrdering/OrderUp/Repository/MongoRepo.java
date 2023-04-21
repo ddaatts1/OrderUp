@@ -410,6 +410,20 @@ public void test(){
         return new Document().append("order",order)
                 .append("product",countProduct);
     }
+
+    public Double getAverageRating(ObjectId id){
+        MongoDatabase database =mongoClient.getDatabase(db);
+        MongoCollection<Document> collection= database.getCollection("average_rating");
+
+        FindIterable<Document> findIterable= collection.find(Filters.eq("referenceId",id));
+    MongoCursor<Document> cursor= findIterable.cursor();
+    if(cursor.hasNext()){
+        return cursor.next().get("average_rating",Double.class);
+    }
+
+    return -1d;
+
+    }
 }
 
 

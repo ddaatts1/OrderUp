@@ -136,6 +136,16 @@ public class Controller {
     }
 
 
+    @GetMapping("/GET_ITEM_DETAIL")
+    public CommonResponse<Object> GET_ITEM_DETAIL(@RequestParam(name = "id") String id){
+
+        CommonResponse<Object> response = new CommonResponse<>();
+
+        response = applicationService.getItemDetail(id);
+
+        return response;
+    }
+
 
 
 

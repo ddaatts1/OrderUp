@@ -12,5 +12,6 @@ import java.util.Optional;
 public interface RestaurantRepository extends MongoRepository<Restaurant, ObjectId> {
     Optional<Restaurant> findByEmail(String email);
     List<Restaurant> findAllBy_idIn(List<ObjectId> ids);
+    Optional<Restaurant> findBy_id(ObjectId id);
 
 }

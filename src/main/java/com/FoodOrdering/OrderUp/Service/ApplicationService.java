@@ -5,10 +5,9 @@ import com.FoodOrdering.OrderUp.Model.AverageRating;
 import com.FoodOrdering.OrderUp.Model.Item;
 import com.FoodOrdering.OrderUp.Model.Media;
 import com.FoodOrdering.OrderUp.Model.Restaurant;
+import com.FoodOrdering.OrderUp.Model.payload.RelateItem;
 import com.FoodOrdering.OrderUp.Model.payload.request.*;
-import com.FoodOrdering.OrderUp.Model.payload.response.GetItemDTO;
-import com.FoodOrdering.OrderUp.Model.payload.response.CommonResponse;
-import com.FoodOrdering.OrderUp.Model.payload.response.GetOrderDTO;
+import com.FoodOrdering.OrderUp.Model.payload.response.*;
 import com.FoodOrdering.OrderUp.Repository.ItemRepository;
 import com.FoodOrdering.OrderUp.Repository.MongoRepo;
 import com.FoodOrdering.OrderUp.Repository.RestaurantRepository;
@@ -350,6 +349,87 @@ public class ApplicationService {
         response.setData(new Document().append("stats",result));
         response.setMessage("thanh cong");
         response.setCode(1);
+        return response;
+    }
+
+    public CommonResponse<Object> getItemDetail(String id) {
+        CommonResponse<Object> response= new CommonResponse<>();
+
+        ItemDetailDTO itemDetailDTO= new ItemDetailDTO();
+        Optional<Item> item= itemRepository.findById(new ObjectId(id));
+
+        if(item.isEmpty()){
+            response.setCode(0);
+            response.setMessage("khong tim duoc du lieu");
+            return response;
+        }
+        Item itemDetail = item.get();
+        Restaurant restaurant= restaurantRepository.findById(itemDetail.getRestaurantid()).get();
+        List<String> categories = itemDetail.getCategories();
+
+        List<GetItemDTO> relateItem =null;
+
+        for(int i=0;i<categories.size();i++){
+            relateItem = mongoRepo.getItemByCategory(categories.get(0));
+        }
+
+        // relate item by category
+        List<RelateItem> relateItemList = relateItem.stream().map(r->{
+            RelateItem relateItem1 = new RelateItem();
+            relateItem1.set_id(r.get_id());
+            relateItem1.setName(r.getName());
+            relateItem1.setPrice(r.getPrice());
+            relateItem1.setImage(r.getImage());
+            return relateItem1;
+        }).collect(Collectors.toList());
+
+        // relate item by restaurant
+        Page<Item> relateItemByResPage = itemRepository.findByRestaurantid(itemDetail.getRestaurantid(),PageRequest.of(0,4));
+        List<Item>relateItemByRes = relateItemByResPage.getContent();
+        List<RelateItem> relateItemByRestaurant = relateItemByRes.stream().map((r->{
+            RelateItem relateItem1 = new RelateItem();
+            relateItem1.set_id(r.get_id().toString());
+            relateItem1.setName(r.getName());
+            relateItem1.setPrice(r.getPrice());
+            String image= null;
+            if (r.getImages() != null){
+                if(r.getImages().size()> 0){
+                    image = r.getImages().get(0);
+                }
+            }
+            relateItem1.setImage(image);
+            return relateItem1;
+        })).collect(Collectors.toList());
+
+
+        itemDetailDTO.set_id(itemDetail.get_id().toString());
+        itemDetailDTO.setName(itemDetail.getName());
+        itemDetailDTO.setPrice(itemDetail.getPrice());
+        itemDetailDTO.setDetail(itemDetail.getDetail());
+        String image= null;
+        if (itemDetail.getImages() != null){
+            if(itemDetail.getImages().size()> 0){
+                image = itemDetail.getImages().get(0);
+            }
+        }
+        itemDetailDTO.setImage(image);
+        itemDetailDTO.setCategories(itemDetail.getCategories());
+
+        RestaurantDTO restaurantDTO= new RestaurantDTO();
+        restaurantDTO.set_id(restaurant.get_id().toString());
+        restaurantDTO.setName(restaurant.getName());
+        restaurantDTO.setPhone(restaurant.getPhone());
+        restaurantDTO.setEmail(restaurant.getEmail());
+        itemDetailDTO.setRestaurant(restaurantDTO);
+        itemDetailDTO.setRelateItemList(relateItemList);
+        itemDetailDTO.setRestaurantRelateItemList(relateItemByRestaurant);
+        itemDetailDTO.setRating(mongoRepo.getAverageRating(itemDetail.get_id()));
+
+
+        response.setData(itemDetailDTO);
+        response.setCode(1);
+        response.setMessage("thanh cong");
+
         return response;
     }
 }
