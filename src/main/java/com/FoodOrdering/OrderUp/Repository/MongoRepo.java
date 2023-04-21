@@ -1,29 +1,37 @@
 package com.FoodOrdering.OrderUp.Repository;
 
+import com.FoodOrdering.OrderUp.Constant.OrderStatus;
 import com.FoodOrdering.OrderUp.Model.AverageRating;
 import com.FoodOrdering.OrderUp.Model.Item;
 
 import com.FoodOrdering.OrderUp.Model.Media;
+import com.FoodOrdering.OrderUp.Model.payload.OrderItem;
 import com.FoodOrdering.OrderUp.Model.payload.request.AddItemRequest;
 import com.FoodOrdering.OrderUp.Model.payload.request.EditItemRequest;
 import com.FoodOrdering.OrderUp.Model.payload.request.OnOffItemRequest;
+import com.FoodOrdering.OrderUp.Model.payload.request.OrderRequest;
+import com.FoodOrdering.OrderUp.Model.payload.response.FoodOrderDTO;
+import com.FoodOrdering.OrderUp.Model.payload.response.GetItemDTO;
+import com.FoodOrdering.OrderUp.Model.payload.response.GetOrderDTO;
 import com.FoodOrdering.OrderUp.MongoConfig.MongoConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
-import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 import javax.print.Doc;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
@@ -40,40 +48,40 @@ public class MongoRepo {
         this.mongoClient = mongoClient;
     }
 
-    public List<Item> getItem() {
-        MongoDatabase database = mongoClient.getDatabase(db);
-        MongoCollection<Document> collection = database.getCollection("items");
+//    public List<Item> getItem() {
+//        MongoDatabase database = mongoClient.getDatabase(db);
+//        MongoCollection<Document> collection = database.getCollection("items");
+//
+//        FindIterable<Document> iterable = collection.find();
+//
+//        MongoCursor<Document> cursor = iterable.cursor();
+//
+//
+//        List<Item> list = iterable.map(i -> {
+//
+//            String id = i.get("_id").toString();
+//            String name = i.get("name",String.class);
+//            String detail = i.get("detail",String.class);
+//            int price = i.get("price",Integer.class);
+//            String status = i.get("status",String.class);
+//            int ordered = i.get("ordered",Integer.class);
+//            String restaurant_id  = i.get("restaurant_id").toString();
+//
+//            Item item = new Item(new ObjectId(id),name,detail,Integer.valueOf(price),status,Integer.valueOf(ordered),new ObjectId(restaurant_id));
+//
+//            return item;
+//        }).into(new ArrayList<>());
+//
+//return list;
+//    }
 
-        FindIterable<Document> iterable = collection.find();
-
-        MongoCursor<Document> cursor = iterable.cursor();
 
 
-        List<Item> list = iterable.map(i -> {
-
-            String id = i.get("_id").toString();
-            String name = i.get("name",String.class);
-            String detail = i.get("detail",String.class);
-            int price = i.get("price",Integer.class);
-            String status = i.get("status",String.class);
-            int ordered = i.get("ordered",Integer.class);
-            String restaurant_id  = i.get("restaurant_id").toString();
-
-            Item item = new Item(new ObjectId(id),name,detail,Integer.valueOf(price),status,Integer.valueOf(ordered),new ObjectId(restaurant_id));
-
-            return item;
-        }).into(new ArrayList<>());
-
-return list;
-    }
-
-
-
-    public List<Media> geListMediaByListItem(List<Item> items){
+    public List<Media> geListMediaByListItem(List<GetItemDTO> items){
         List<Media> listMedia = new ArrayList<>();
 
         // get list item id
-        List<ObjectId> listItemId = items.stream().map(i->i.get_id()).collect(Collectors.toList());
+        List<String> listItemId = items.stream().map(i->i.get_id()).collect(Collectors.toList());
 
         MongoDatabase mongoDatabase = mongoClient.getDatabase(db);
         MongoCollection<Document> collection = mongoDatabase.getCollection("media");
@@ -98,11 +106,14 @@ return list;
 
     }
 
-    public List<AverageRating> getListAverageRatingByListItem(List<Item> items){
+    public List<AverageRating> getListAverageRatingByListItem(List<GetItemDTO> items){
         List<AverageRating> averageRatingList = new ArrayList<>();
 
         //get list item id
-        List<ObjectId> listItemId = items.stream().map(i->i.get_id()).collect(Collectors.toList());
+        List<ObjectId> listItemId = items.stream().map(i->{
+            String id = i.get_id();
+          return  new ObjectId(id) ;
+        }).collect(Collectors.toList());
 
         MongoDatabase database= mongoClient.getDatabase(db);
         MongoCollection<Document> collection = database.getCollection("average_rating");
@@ -114,7 +125,6 @@ return list;
 
         while (cursor.hasNext()){
             Document document = cursor.next();
-
             String id = document.get("_id").toString();
             int numrating = document.get("num_rating",Integer.class);
             Double averagerating = document.get("average_rating",Double.class);
@@ -128,23 +138,6 @@ return list;
 
 
 
-
-
-    public static void main(String[] args) {
-
-//        MongoConfig mongoConfig = new MongoConfig();
-//        MongoRepo mongoRepo= new MongoRepo(mongoConfig.mongoClient());
-//        List<Item> item = mongoRepo.getItem();
-//
-//        List<Media> media = mongoRepo.geListMediaByListItem(item);
-//        List<AverageRating> averageRatingList = mongoRepo.getListAverageRatingByListItem(item);
-//
-//
-//        System.out.println(averageRatingList);
-
-    }
-
-
     public boolean addItem(AddItemRequest item) {
         MongoDatabase database= mongoClient.getDatabase(db);
         MongoCollection<Document> collection = database.getCollection("items");
@@ -156,6 +149,7 @@ return list;
         newitem.append("price",item.getPrice());
         newitem.append("status","ON");
         newitem.append("restaurant_id", new ObjectId(item.getRestaurant_id()));
+        newitem.append("categories",item.getCategories());
         newitem.append("images", item.getImages());
         newitem.append("ordered",0);
 
@@ -195,7 +189,9 @@ return list;
         Bson update = Updates.combine(
                 Updates.set("name",item.getName()),
                 Updates.set("detail",item.getDetail()),
-                Updates.set("price",item.getPrice())
+                Updates.set("price",item.getPrice()),
+                Updates.set("images",item.getImages()),
+                Updates.set("categories",item.getCategories())
         );
 
         UpdateResult updateResult= collection.updateOne(filter,update);
@@ -204,7 +200,217 @@ return list;
 
         return false;
 
-}}
+}
+
+public List<GetItemDTO> getItemByCategory(String category){
+        List<GetItemDTO> list = new ArrayList<>();
+    MongoDatabase database = mongoClient.getDatabase(db);
+    MongoCollection<Document> collection = database.getCollection("items");
+
+    Bson filter = Filters.in("categories", Arrays.asList(category));
+    FindIterable<Document> findIterable =  collection.find(filter);
+    MongoCursor<Document> cursor = findIterable.cursor();
+
+    Document document = new Document();
+    while (cursor.hasNext()){
+        document = cursor.next();
+        ObjectId id = document.get("_id",ObjectId.class);
+        String _id = id.toString();
+        String name = document.get("name",String.class);
+        ObjectId resId = document.get("restaurant_id",ObjectId.class);
+        String restaurantId =  resId.toString();
+        int price = document.get("price",Integer.class);
+        List<String> images = document.get("images",ArrayList.class);
+        String image=null;
+        if(images != null)
+        if(images.size()>0){
+            image = images.get(0);
+        }
+        int ordered = document.get("ordered",Integer.class);
+
+
+        GetItemDTO getItemDTO= new GetItemDTO();
+        getItemDTO.set_id(_id);
+        getItemDTO.setImage_url(image);
+        getItemDTO.setName(name);
+        getItemDTO.setOrdered(ordered);
+        getItemDTO.setPrice(price);
+        getItemDTO.setRestaurantId(restaurantId);
+        list.add(getItemDTO);
+    }
+        return list;
+}
+
+public void test(){
+        MongoDatabase database = mongoClient.getDatabase("OrderUp");
+        MongoCollection<Document> collection = database.getCollection("items");
+
+        Bson filter = Filters.in("categories", Arrays.asList("CHAO","BUN"));
+        FindIterable<Document> findIterable =  collection.find(filter);
+        MongoCursor<Document> cursor = findIterable.cursor();
+
+        while (cursor.hasNext()){
+            System.out.println(cursor.next());
+        }
+}
+
+    public static void main(String[] args) {
+
+        MongoConfig mongoConfig = new MongoConfig();
+        MongoRepo mongoRepo= new MongoRepo(mongoConfig.mongoClient());
+//        List<Item> item = mongoRepo.getItem();
+//
+//        List<Media> media = mongoRepo.geListMediaByListItem(item);
+//        List<AverageRating> averageRatingList = mongoRepo.getListAverageRatingByListItem(item);
+//
+//
+//        System.out.println(averageRatingList);
+        mongoRepo.test();
+
+
+    }
+
+    public boolean order(OrderRequest orderRequest) {
+
+        MongoDatabase database = mongoClient.getDatabase("OrderUp");
+        MongoCollection<Document> collection = database.getCollection("food_order");
+
+
+        Set<String> resId = new HashSet<>();
+        orderRequest.getItems().stream().forEach(i->{
+            resId.add(i.getRestaurantId());
+        });
+
+        resId.stream().forEach(r->{
+            MongoCollection<Document> finalCollection = database.getCollection("food_order");
+            Document foodOrder = new Document();
+            foodOrder.append("customerPhone",orderRequest.getPhone());
+            foodOrder.append("customerAddress",orderRequest.getAddress_detail());
+            foodOrder.append("orderDatetime",new Date());
+            foodOrder.append("restaurant_id",new ObjectId(r));
+            foodOrder.append("note",orderRequest.getNote());
+            foodOrder.append("method",orderRequest.getMethod());
+            foodOrder.append("orderStatus", OrderStatus.PENDING);
+            foodOrder.append("customerName",orderRequest.getName());
+            InsertOneResult insertFoodOrder = finalCollection.insertOne(foodOrder);
+            finalCollection = database.getCollection("order_item");
+            BsonValue foodOrderId = insertFoodOrder.getInsertedId();
+            List<OrderItem> list = orderRequest.getItems();
+            for(int i=0;i<list.size();i++){
+                if(list.get(i).getRestaurantId().equalsIgnoreCase(r)){
+                    Document orderItem = new Document();
+                    orderItem.append("orderId",foodOrderId.asObjectId().getValue());
+                    orderItem.append("itemId",new ObjectId(list.get(i).get_id()));
+                    orderItem.append("quantity",list.get(i).getQuantity());
+                    InsertOneResult insertOneResult = finalCollection.insertOne(orderItem);
+
+                    MongoCollection itemCOlelction =database.getCollection("items");
+                    Bson filter = Filters.eq("_id", new ObjectId(list.get(i).get_id()));
+                    Bson update = Updates.inc("ordered",list.get(i).getQuantity());
+                    itemCOlelction.updateOne(filter,update);
+                }
+
+            }
+
+        });
+
+
+
+
+
+
+        return  true;
+    }
+
+    public List<GetOrderDTO> getOrder(String restaurantId, String status) {
+        MongoDatabase database = mongoClient.getDatabase("OrderUp");
+        MongoCollection<Document> collection = database.getCollection("food_order");
+
+        List<GetOrderDTO> getOrderDTOList = new ArrayList<>();
+        Bson filter = Filters.and(Filters.eq("restaurant_id",new ObjectId(restaurantId)),Filters.eq("orderStatus",status));
+
+        FindIterable<Document> findIterable = collection.find(filter);
+        MongoCursor<Document> cursor = findIterable.cursor();
+
+        while (cursor.hasNext()){
+            GetOrderDTO getOrderDTO = new GetOrderDTO();
+
+            Document document= cursor.next();
+            System.out.println("===============food order: "+ document);
+            getOrderDTO.setRestaurant_id(document.get("restaurant_id",ObjectId.class).toString());
+            getOrderDTO.setNote(document.get("note",String.class));
+            getOrderDTO.setMethod(document.get("method",String.class));
+            getOrderDTO.setCustomerPhone(document.get("customerPhone",String.class));
+            getOrderDTO.setCustomerAddress(document.get("customerAddress",String.class));
+            getOrderDTO.setOrderStatus(document.get("orderStatus",String.class));
+            getOrderDTO.setOrderDatetime(document.get("orderDatetime",Date.class));
+            getOrderDTO.setFoodOrderId(document.get("_id",ObjectId.class).toString());
+            getOrderDTO.setCustomerName(document.get("customerName",String.class));
+
+            collection = database.getCollection("order_item");
+            Bson filter1 = Filters.eq("orderId",document.get("_id",ObjectId.class));
+
+            FindIterable<Document> findIterable1 =  collection.find(filter1);
+            MongoCursor<Document> cursor1 = findIterable1.cursor();
+            List<FoodOrderDTO> foodOrderDTOList = new ArrayList<>();
+            while (cursor1.hasNext()){
+                Document orderItem = cursor1.next();
+
+                MongoCollection<Document> itemCollection = database.getCollection("items");
+                FindIterable<Document> findItemIterable = itemCollection.find(Filters.eq("_id",orderItem.get("itemId",ObjectId.class)));
+                MongoCursor<Document> itemCursor  = findItemIterable.cursor();
+                FoodOrderDTO foodOrderDTO= new FoodOrderDTO();
+                if(itemCursor.hasNext()){
+                    Document item = itemCursor.next();
+                    foodOrderDTO.setName(item.get("name",String.class));
+                    foodOrderDTO.setPrice(item.get("price",Integer.class));
+                    foodOrderDTO.setQuantity(orderItem.get("quantity",Integer.class));
+
+                }
+                foodOrderDTOList.add(foodOrderDTO);
+
+            }
+            getOrderDTO.setFoodOrderList(foodOrderDTOList);
+            getOrderDTOList.add(getOrderDTO);
+        }
+
+        return getOrderDTOList;
+
+    }
+
+    public void changeOrderStatus(OnOffItemRequest changeOrderStatusRequest) {
+
+        MongoDatabase database= mongoClient.getDatabase(db);
+        MongoCollection<Document> collection = database.getCollection("food_order");
+
+        Bson filter = Filters.eq("_id",new ObjectId(changeOrderStatusRequest.get_id()));
+        Bson update = Updates.set("orderStatus",changeOrderStatusRequest.getStatus());
+        collection.updateOne(filter,update);
+
+    }
+
+    public Document getRestaurantStat(ObjectId id) {
+
+        MongoDatabase database = mongoClient.getDatabase(db);
+        MongoCollection<Document> collection = database.getCollection("items");
+
+        int order = 0;
+        int countProduct=0;
+        Bson itemFilter = Filters.eq("restaurant_id",id);
+        FindIterable<Document> itemIterable = collection.find(itemFilter);
+        MongoCursor<Document> cursor =  itemIterable.cursor();
+
+        while (cursor.hasNext()){
+            Document document = cursor.next();
+            int or = document.get("ordered",Integer.class);
+            order+=or;
+            countProduct++;
+        }
+
+        return new Document().append("order",order)
+                .append("product",countProduct);
+    }
+}
 
 
 

@@ -43,31 +43,55 @@ package com.FoodOrdering.OrderUp.googleMapService;
 //}
 
 
-public class DistanceCalculator {
+import com.google.maps.DistanceMatrixApi;
+import com.google.maps.DistanceMatrixApiRequest;
+import com.google.maps.GeoApiContext;
+import com.google.maps.errors.ApiException;
+import com.google.maps.model.DistanceMatrix;
+import com.google.maps.model.TravelMode;
 
-    public static double distance(double lat1, double lon1, double lat2, double lon2) {
-        double R = 6371; // Earth's radius in km
+import java.io.IOException;
+
+public class DistanceCalculator {
+    public static final double R = 6372.8;
+
+    public static double distance(double lat1, double lon1, double lat2, double lon2)  {
+//        GeoApiContext context = new GeoApiContext.Builder()
+//                .apiKey("AIzaSyC1QyAzxN2d5A-i0XscLboZjrW6p0EmmoE")
+//                .build();
+//
+//        DistanceMatrixApiRequest request = DistanceMatrixApi.newRequest(context)
+//                .origins(new String[]{lat1+","+lon1})
+//                .destinations(new String[]{lat2+","+lon2})
+//                .mode(TravelMode.DRIVING);
+//
+//        DistanceMatrix matrix = null;
+//        try{
+//             matrix = request.await();
+//
+//        }catch (Exception e){
+//            e.printStackTrace();
+//        }
+//
+//        System.out.println(matrix.rows[0].elements[0].distance);
 
         double dLat = Math.toRadians(lat2 - lat1);
         double dLon = Math.toRadians(lon2 - lon1);
+        lat1 = Math.toRadians(lat1);
+        lat2 = Math.toRadians(lat2);
 
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double a = Math.pow(Math.sin(dLat / 2), 2) + Math.pow(Math.sin(dLon / 2), 2) * Math.cos(lat1) * Math.cos(lat2);
+        double c = 2 * Math.asin(Math.sqrt(a));
+        return R * c;
 
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        double distance = R * c;
-
-        return distance;
     }
 
     public static void main(String[] args) {
         double lat1 = 21.014620;
         double lon1 = 105.782072;
 
-        double lat2 = 21.032344;
-        double lon2 = 105.787093;
+        double lat2 =  21.034109;
+        double lon2 = 105.780162;
 
         double distance = distance(lat1, lon1, lat2, lon2);
 

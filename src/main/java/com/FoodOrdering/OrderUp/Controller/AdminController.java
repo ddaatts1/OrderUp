@@ -16,14 +16,18 @@ import com.FoodOrdering.OrderUp.config.JwtService;
 import com.mongodb.client.MongoClient;
 import jakarta.servlet.http.HttpServletRequest;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.Id;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/admin/OrderUp")
@@ -54,9 +58,14 @@ public class AdminController {
     Logger log = LoggerFactory.getLogger(AdminController.class);
 
 
-    @CrossOrigin(origins = "http://localhost:3000")
     @PostMapping("/ADD_ITEM")
-    public CommonResponse<Object> addItem(@RequestBody(required = true) AddItemRequest item){
+    public CommonResponse<Object> addItem(@RequestHeader Map<String,String> header, @RequestBody(required = true) AddItemRequest item){
+        String jwt = header.get("authorization");
+        log.info("jwt: "+jwt);
+        Restaurant restaurant = getInforFromJWT(jwt);
+        log.info("request from : "+ restaurant);
+        item.setRestaurant_id(restaurant.get_id().toString());
+        log.info("====================> add item request :"+ item);
         CommonResponse<Object> check = applicationService.addItem(item);
         return check;
     }
@@ -148,6 +157,82 @@ public class AdminController {
         return delete;
     }
 
+
+    @GetMapping("/GET_ITEM")
+    public CommonResponse<Object> GET_ITEM (@RequestParam(name = "id" )String id){
+        CommonResponse<Object> response = new CommonResponse<>();
+
+
+        Optional<Item> item = itemRepository.findById(new ObjectId(id));
+
+
+        if(item.isPresent()){
+            response.setCode(1);
+            Item  i = item.get();
+            String image = null  ;
+
+            if(i.getImages() != null){
+                if(i.getImages().size()>=1){
+                    image = i.getImages().get(0);
+                }
+            }
+
+            Document document = new Document().append("_id",i.get_id().toString()).
+                    append("name",i.getName()).append("detail",i.getDetail()).append("categories",i.getCategories()).
+                    append("price",i.getPrice()).append("image",image);
+            response.setData(document);
+            response.setMessage("truy vấn dữ liệu thành công ");
+        }
+        else {
+            response.setCode(0);
+            response.setData(null);
+            response.setMessage("truy vấn dữ liệu khong thành công ");
+        }
+
+
+        return response;
+    }
+
+    @GetMapping("/GET_ORDER")
+    public CommonResponse<Object> GET_ORDER(@RequestHeader Map<String,String> header,@RequestParam(name = "status") String status){
+        CommonResponse<Object> response= new CommonResponse<>();
+        String jwt = header.get("authorization");
+        log.info("jwt: "+jwt);
+        Restaurant restaurant = getInforFromJWT(jwt);
+        log.info("request from : "+ restaurant);
+
+        response = applicationService.getOrder(restaurant.get_id().toString(), status);
+
+        return response;
+    }
+
+
+    @PostMapping("/CHANGE_ORDER_STATUS")
+    public CommonResponse<Object> CHANGE_ORDER_STATUS(@RequestBody OnOffItemRequest changeOrderStatusRequest){
+
+        CommonResponse<Object> response = new CommonResponse<>();
+
+
+        response = applicationService.changeOrderStatus(changeOrderStatusRequest);
+
+        return  response;
+    }
+
+    @GetMapping("/GET_RESTAURANT_STAT")
+    public CommonResponse<Object> GET_RESTAURANT_STAT (@RequestHeader Map<String,String> header){
+        CommonResponse<Object> response =  new CommonResponse<>();
+
+        String jwt = header.get("authorization");
+        log.info("jwt: "+jwt);
+        Restaurant restaurant = getInforFromJWT(jwt);
+        log.info("request from : "+ restaurant);
+
+         response  = applicationService.getRestaurantStat(restaurant.get_id());
+
+
+        return response;
+    }
+
     @GetMapping("/getJwt")
     public String getJwt(HttpServletRequest request){
         String authorizationHeader = request.getHeader("Authorization");
@@ -161,6 +246,7 @@ public class AdminController {
 
 
     public Restaurant getInforFromJWT(String jwt){
+        System.out.println("===============>"+ jwt);
         String[] parts = jwt.split(" ");
         String token = parts[1];
         String name =jwtService.extractUsername(token);

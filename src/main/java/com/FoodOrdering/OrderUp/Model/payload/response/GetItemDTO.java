@@ -9,7 +9,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GetItemDTO {
-    private Item item ;
+    private String _id;
+    private String name;
+    private int price;
+    private String image;
+    private int ordered;
+    private String restaurantId;
     private String image_url ;
     private Double rate_average;
     private Double distance;

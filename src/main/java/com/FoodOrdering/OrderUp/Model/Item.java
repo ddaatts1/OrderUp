@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import javax.persistence.Id;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -25,6 +26,8 @@ public class Item {
     private String detail;
     private int price;
     private String status;
+    private List<String> categories;
+    private List<String> images;
     private int ordered;
     @Field(name = "restaurant_id")
     private  ObjectId restaurantid;
