@@ -243,6 +243,48 @@ public class AdminController {
         return restaurant.toString();
     }
 
+    @PostMapping("/ADD_GOOGLE_UID")
+    public CommonResponse<Object>ADD_GOOGLE_UID(@RequestHeader Map<String,String> header, @RequestParam(name = "uid") String uid,@RequestParam(name = "email") String email){
+        CommonResponse<Object> response= new CommonResponse<>();
+
+        String jwt = header.get("authorization");
+        log.info("jwt: "+jwt);
+        Restaurant restaurant = getInforFromJWT(jwt);
+        log.info("request from : "+ restaurant);
+
+        if(!restaurant.getEmail().equalsIgnoreCase(email)){
+            response.setMessage("email khong dung");
+            response.setCode(0);
+            return response;
+        }
+
+        applicationService.addGoogleUid(restaurant.get_id(),uid);
+
+        response.setCode(1);
+        response.setMessage("thanh cong");
+        response.setData(restaurant.get_id().toString());
+        return response;
+    }
+
+
+    @GetMapping("/GET_RESTAURANT_BY_GOOGLE_UID")
+    public CommonResponse<Object> GET_RESTAURANT_BY_GOOGLE_UID(@RequestParam(name = "uid") String uid){
+        CommonResponse<Object> response= new CommonResponse<>();
+
+        Optional<Restaurant>opRes =  restaurantRepository.findByUid(uid);
+        if(opRes.isPresent()){
+            Restaurant restaurant = opRes.get();
+            response.setData(restaurant.getName());
+            response.setCode(1);
+            response.setMessage("thanh cong");
+            return response;
+        }else {
+            response.setCode(0);
+            response.setMessage("khong thanh cong");
+        }
+
+        return response;
+    }
 
 
     public Restaurant getInforFromJWT(String jwt){

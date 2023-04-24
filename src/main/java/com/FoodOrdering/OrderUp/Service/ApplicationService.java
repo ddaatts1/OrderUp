@@ -315,7 +315,6 @@ public class ApplicationService {
 
         CommonResponse<Object> response= new CommonResponse<>();
 
-
       List<GetOrderDTO> list =   mongoRepo.getOrder(restaurantId,status);
 
       response.setData(new Document().append("listOrder",list));
@@ -368,7 +367,9 @@ public class ApplicationService {
         List<String> categories = itemDetail.getCategories();
 
         List<GetItemDTO> relateItem =null;
-
+if(itemDetail.getCategories() == null){
+    relateItem = mongoRepo.getItemByCategory("BURGER");
+}else
         for(int i=0;i<categories.size();i++){
             relateItem = mongoRepo.getItemByCategory(categories.get(0));
         }
@@ -420,6 +421,7 @@ public class ApplicationService {
         restaurantDTO.setName(restaurant.getName());
         restaurantDTO.setPhone(restaurant.getPhone());
         restaurantDTO.setEmail(restaurant.getEmail());
+        restaurantDTO.setUid(restaurant.getUid());
         itemDetailDTO.setRestaurant(restaurantDTO);
         itemDetailDTO.setRelateItemList(relateItemList);
         itemDetailDTO.setRestaurantRelateItemList(relateItemByRestaurant);
@@ -431,5 +433,10 @@ public class ApplicationService {
         response.setMessage("thanh cong");
 
         return response;
+    }
+
+    public void addGoogleUid(ObjectId id, String uid) {
+
+        mongoRepo.addGoogleUid(id,uid);
     }
 }

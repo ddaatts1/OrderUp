@@ -424,6 +424,16 @@ public void test(){
     return -1d;
 
     }
+
+    public void addGoogleUid(ObjectId id, String uid) {
+
+        MongoDatabase database =mongoClient.getDatabase(db);
+        MongoCollection<Document> collection= database.getCollection("restaurants");
+
+        Bson filter = Filters.eq("_id",id);
+        Bson update = Updates.set("uid",uid);
+        collection.updateOne(filter,update);
+    }
 }
 
 

@@ -10,5 +10,6 @@ public class RestaurantDTO {
     private String name ;
     private String phone ;
     private String email;
+    private String uid;
 
 }

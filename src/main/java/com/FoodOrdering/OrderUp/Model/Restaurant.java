@@ -62,6 +62,7 @@ public class Restaurant implements UserDetails {
     private Double address_long;
     private Double address_lat;
     private String phone;
+    private String uid;
     private Date expiredOTP;
     private String otp;
 
