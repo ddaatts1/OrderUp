@@ -1,10 +1,12 @@
 package com.FoodOrdering.OrderUp.Controller;
 
+import com.FoodOrdering.OrderUp.DeliverFee.CaculateDeliverFee;
 import com.FoodOrdering.OrderUp.Email.CreateOTP;
 import com.FoodOrdering.OrderUp.Email.EmailSenderService;
 import com.FoodOrdering.OrderUp.Model.Category;
 import com.FoodOrdering.OrderUp.Model.Item;
 import com.FoodOrdering.OrderUp.Model.Restaurant;
+import com.FoodOrdering.OrderUp.Model.payload.GetShippingFeeRequest;
 import com.FoodOrdering.OrderUp.Model.payload.request.*;
 import com.FoodOrdering.OrderUp.Model.payload.response.GetItemDTO;
 import com.FoodOrdering.OrderUp.Model.payload.response.CommonResponse;
@@ -142,6 +144,22 @@ public class Controller {
         CommonResponse<Object> response = new CommonResponse<>();
 
         response = applicationService.getItemDetail(id);
+
+        return response;
+    }
+
+    @GetMapping("/GET_SHIPPING_FEE")
+    public CommonResponse<Object> GET_SHIPPING_FEE(@RequestBody GetShippingFeeRequest request){
+        CommonResponse<Object> response = new CommonResponse<>();
+
+
+        CaculateDeliverFee caculateDeliverFee =  new CaculateDeliverFee();
+
+        double fee  = caculateDeliverFee.caculate(request.getFrom(),request.getTo());
+
+        response.setData(fee);
+        response.setCode(1);
+        response.setMessage("thanh cong ");
 
         return response;
     }
