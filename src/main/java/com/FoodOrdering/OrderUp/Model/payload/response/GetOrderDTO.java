@@ -14,7 +14,7 @@ import java.util.List;
 public class GetOrderDTO {
         String customerName;
         String foodOrderId;
-  String customerPhone;
+        String customerPhone;
           String customerAddress;
           Date orderDatetime;
           String restaurant_id;

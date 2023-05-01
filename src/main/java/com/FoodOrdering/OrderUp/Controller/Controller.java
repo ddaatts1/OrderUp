@@ -148,7 +148,7 @@ public class Controller {
         return response;
     }
 
-    @GetMapping("/GET_SHIPPING_FEE")
+    @PostMapping("/GET_SHIPPING_FEE")
     public CommonResponse<Object> GET_SHIPPING_FEE(@RequestBody GetShippingFeeRequest request){
         CommonResponse<Object> response = new CommonResponse<>();
 
@@ -163,6 +163,36 @@ public class Controller {
 
         return response;
     }
+
+    @GetMapping("/GET_ORDER_ITEMS")
+    public CommonResponse<Object> GET_ORDER_ITEMS(@RequestParam("phone") String phone,
+                                                  @RequestParam("status") String status
+                                                  ){
+        CommonResponse<Object> response= new CommonResponse<>();
+
+        response = applicationService.userGetOrder( phone,status);
+        response.setCode(1);
+        response.setMessage("thanh cong");
+
+
+        return response;
+    }
+
+
+    @PostMapping("/RATE")
+    public CommonResponse<Object> RATE(@RequestParam("itemId") String  itemId,
+                                       @RequestParam("orderItemId") String orderItemId,
+                                       @RequestParam("rattingValue") double rattingValue
+    ){
+
+        CommonResponse<Object> response = new CommonResponse<>();
+
+        response = applicationService.rate(itemId,orderItemId,rattingValue);
+
+        return response;
+    }
+
+
 
 
 

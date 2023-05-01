@@ -267,24 +267,25 @@ public class ApplicationService {
         uniqueRestaurants.forEach(u->{
             System.out.println(u);
         });
+
+        Map<String,Restaurant> resId_Res = new HashMap<>();
         uniqueRestaurants.forEach(r->{
             Double distance = DistanceCalculator.distance(r.getAddress_lat(),r.getAddress_long(),
                     getItemsRequest.getAddress_lat(),getItemsRequest.getAddress_long());
             resId_Distance.put(r.get_id().toString(),distance);
+            resId_Res.put(r.get_id().toString(),r);
 
         });
-
-
 
         // set list GetItemDTO
         for (GetItemDTO i : listItem
         ) {
 
-            DecimalFormat df = new DecimalFormat("#.##");
-            String formatted = df.format(resId_Distance.get(i.getRestaurantId()));
-
+//            DecimalFormat df = new DecimalFormat("#.##");
+//            String formatted = df.format(resId_Distance.get(i.getRestaurantId()));
+            i.setResAddress(resId_Res.get(i.getRestaurantId()) == null? "Trần Thái Tông, Dịch Vọng Hậu, Cầu Giấy, Hà Nội, Việt Nam":resId_Res.get(i.getRestaurantId()).getAddress_detail());
             i.setRate_average(mapItemAverageRating.get(new ObjectId(i.get_id())));
-            i.setDistance(Double.parseDouble(formatted));
+//            i.setDistance(Double.parseDouble(formatted));
             list.add(i);
         }
 
@@ -380,7 +381,7 @@ if(itemDetail.getCategories() == null){
             relateItem1.set_id(r.get_id());
             relateItem1.setName(r.getName());
             relateItem1.setPrice(r.getPrice());
-            relateItem1.setImage(r.getImage());
+            relateItem1.setImage(r.getImage_url());
             return relateItem1;
         }).collect(Collectors.toList());
 
@@ -417,13 +418,14 @@ if(itemDetail.getCategories() == null){
         itemDetailDTO.setCategories(itemDetail.getCategories());
 
         RestaurantDTO restaurantDTO= new RestaurantDTO();
+        restaurantDTO.setAddress(restaurant.getAddress_detail());
         restaurantDTO.set_id(restaurant.get_id().toString());
         restaurantDTO.setName(restaurant.getName());
         restaurantDTO.setPhone(restaurant.getPhone());
         restaurantDTO.setEmail(restaurant.getEmail());
         restaurantDTO.setUid(restaurant.getUid());
         itemDetailDTO.setRestaurant(restaurantDTO);
-        itemDetailDTO.setRelateItemList(relateItemList);
+        itemDetailDTO.setRelateItemList(relateItemList.size() > 4? relateItemList.subList(0,4): relateItemList);
         itemDetailDTO.setRestaurantRelateItemList(relateItemByRestaurant);
         itemDetailDTO.setRating(mongoRepo.getAverageRating(itemDetail.get_id()));
 
@@ -438,5 +440,36 @@ if(itemDetail.getCategories() == null){
     public void addGoogleUid(ObjectId id, String uid) {
 
         mongoRepo.addGoogleUid(id,uid);
+    }
+
+    public CommonResponse<Object> userGetOrder(String phone,String status) {
+
+        CommonResponse<Object> response= new CommonResponse<>();
+
+        List<GetOrderDTO> list =   mongoRepo.userGetOrder(phone,status);
+
+        response.setData(new Document().append("listOrder",list));
+        response.setMessage("truy van thanh cong");
+        response.setCode(1);
+
+
+        return response;
+    }
+
+    public CommonResponse<Object> rate(String itemId, String orderItemId, double rattingValue) {
+
+        CommonResponse<Object> response =  new CommonResponse<>();
+
+        mongoRepo.rate(itemId,orderItemId,rattingValue);
+
+        response.setMessage("thanh cong");
+        response.setCode(1);
+
+        return response;
+    }
+
+    public void dailyCalculateRating() {
+
+        mongoRepo.dailyCalculateRating();
     }
 }

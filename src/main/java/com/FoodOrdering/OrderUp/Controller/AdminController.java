@@ -12,9 +12,11 @@ import com.FoodOrdering.OrderUp.Repository.MediaRepository;
 import com.FoodOrdering.OrderUp.Repository.MongoRepo;
 import com.FoodOrdering.OrderUp.Repository.RestaurantRepository;
 import com.FoodOrdering.OrderUp.Service.ApplicationService;
+import com.FoodOrdering.OrderUp.Service.DailyReportService;
 import com.FoodOrdering.OrderUp.config.JwtService;
 import com.mongodb.client.MongoClient;
 import jakarta.servlet.http.HttpServletRequest;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -51,6 +53,9 @@ public class AdminController {
     MongoRepo mongoRepo;
     @Autowired
     JwtService jwtService;
+
+    @Autowired
+    DailyReportService dailyReportService;
 
     @Autowired
     RestaurantRepository restaurantRepository;
@@ -295,6 +300,31 @@ public class AdminController {
         Restaurant restaurant = restaurantRepository.findByEmail(name).get();
 
         return restaurant;
+    }
+
+
+    @GetMapping("/GET_REPORT")
+    public CommonResponse<Object> GET_REPORT(@RequestHeader Map<String,String> header){
+        CommonResponse<Object> response = new CommonResponse<>();
+
+        String jwt = header.get("authorization");
+        log.info("jwt: "+jwt);
+        Restaurant restaurant = getInforFromJWT(jwt);
+        log.info("request from : "+ restaurant);
+
+        try {
+            dailyReportService.transactionByDay(restaurant.get_id(), restaurant.getEmail());
+            response.setCode(1);
+            response.setData("Thống kê được gử vào email: "+ restaurant.getEmail());
+            return response;
+        } catch (InvalidFormatException e) {
+            e.printStackTrace();
+
+            response.setCode(0);
+            response.setData("that bai");
+            return response;
+        }
+
     }
 
 

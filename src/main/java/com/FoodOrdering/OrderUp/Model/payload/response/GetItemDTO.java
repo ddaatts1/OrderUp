@@ -15,6 +15,7 @@ public class GetItemDTO {
     private String image;
     private int ordered;
     private String restaurantId;
+    private String resAddress;
     private String image_url ;
     private Double rate_average;
     private Double distance;

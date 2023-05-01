@@ -16,7 +16,7 @@ public class AverageRating {
 
     @Id
     private ObjectId _id;
-    private int num_rating;
+//    private int num_rating;
     private Double average_rating;
     private ObjectId referenceId;
 
