@@ -28,6 +28,7 @@ package com.FoodOrdering.OrderUp.Model;
 //}
 
 import com.FoodOrdering.OrderUp.Enum.Role;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
@@ -61,6 +62,7 @@ public class Restaurant implements UserDetails {
     private String address_detail;
     private Double address_long;
     private Double address_lat;
+    private Date createDate;
     private String phone;
     private String uid;
     private Date expiredOTP;

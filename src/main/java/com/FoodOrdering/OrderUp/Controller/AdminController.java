@@ -7,6 +7,7 @@ import com.FoodOrdering.OrderUp.Model.payload.request.AddItemRequest;
 import com.FoodOrdering.OrderUp.Model.payload.request.EditItemRequest;
 import com.FoodOrdering.OrderUp.Model.payload.request.OnOffItemRequest;
 import com.FoodOrdering.OrderUp.Model.payload.response.CommonResponse;
+import com.FoodOrdering.OrderUp.Model.payload.response.RestaurantDTO;
 import com.FoodOrdering.OrderUp.Repository.ItemRepository;
 import com.FoodOrdering.OrderUp.Repository.MediaRepository;
 import com.FoodOrdering.OrderUp.Repository.MongoRepo;
@@ -24,12 +25,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.Id;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/OrderUp")
@@ -326,6 +331,49 @@ public class AdminController {
         }
 
     }
+
+
+    @GetMapping("/GET_ALL_STAT")
+    public CommonResponse<Object> GET_ALL_STAT (@RequestHeader Map<String,String> header){
+        CommonResponse<Object> response =  new CommonResponse<>();
+
+        String jwt = header.get("authorization");
+        log.info("jwt: "+jwt);
+        Restaurant restaurant = getInforFromJWT(jwt);
+        log.info("request from : "+ restaurant);
+
+        response  = applicationService.getAllStat();
+
+
+        return response;
+    }
+
+    @GetMapping("/GET_ALL_RES")
+    public CommonResponse<Object> GET_ALL_RES(@RequestParam("page") int page){
+        CommonResponse<Object> response= new CommonResponse<>();
+
+response.setCode(1);
+response.setMessage("thanh cong");
+Page<Restaurant> page1 = restaurantRepository.findAllByRole("MANAGER", PageRequest.of(page,5));
+        List<RestaurantDTO> list = page1.getContent().stream().map((r)->{
+
+            return    new RestaurantDTO(r.get_id().toString(),r.getName(),r.getPhone(),r.getEmail(),r.getAddress_detail(),r.isStatus());
+        }).collect(Collectors.toList());
+
+        Page<RestaurantDTO> resPage = new PageImpl<>(list,page1.getPageable(),list.size());
+        response.setData(resPage);
+        return response;
+    }
+
+    @PostMapping("/ON_OFF_RES_STATUS")
+    public  CommonResponse<Object> ON_OFF_RES_STATUS(@RequestBody OnOffItemRequest onOffItemRequest){
+        CommonResponse<Object> commonResponse = new CommonResponse<>();
+
+        commonResponse = applicationService.onoffRes(onOffItemRequest);
+
+        return commonResponse;
+    }
+
 
 
 }

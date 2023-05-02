@@ -41,7 +41,7 @@ public class JwtService {
     Restaurant r = (Restaurant) userDetails;
     return Jwts
         .builder()
-        .setClaims(extraClaims).claim("restaurantName",r.getName())
+        .setClaims(extraClaims).claim("restaurantName",r.getName()).claim("role",r.getRole())
         .setSubject(userDetails.getUsername())
         .setIssuedAt(new Date(System.currentTimeMillis()))
         .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 10))

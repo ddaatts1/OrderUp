@@ -472,4 +472,48 @@ if(itemDetail.getCategories() == null){
 
         mongoRepo.dailyCalculateRating();
     }
+
+    public CommonResponse<Object> getAllStat() {
+
+        CommonResponse<Object> response= new CommonResponse<>();
+
+        GetAllStatDTO getAllStatDTO = mongoRepo.getAllStat();
+        response.setData(getAllStatDTO);
+        response.setMessage("thanh cong");
+        response.setCode(1);
+
+        return response;
+    }
+
+    public CommonResponse<Object> getAllRes() {
+        CommonResponse<Object> response= new CommonResponse<>();
+
+
+        List<RestaurantDTO> restaurantDTOS = mongoRepo.getAllRes();
+        response.setData(restaurantDTOS);
+        response.setCode(1);
+        response.setMessage("thanh cong");
+
+        return  response;
+    }
+
+    public CommonResponse<Object> onoffRes(OnOffItemRequest onOffItemRequest) {
+
+        CommonResponse<Object> response = new CommonResponse<>();
+
+        List<String> status = Arrays.asList("ON", "OFF");
+        if (!status.contains(onOffItemRequest.getStatus())) {
+            response.setCode(0);
+            response.setMessage("status phai la on hoc off");
+            return response;
+        }
+        boolean check = mongoRepo.onoffRes(onOffItemRequest);
+        if (check) {
+            response.setCode(1);
+            response.setMessage(onOffItemRequest.getStatus() + " thanh cong");
+        }
+
+        return response;
+
+    }
 }

@@ -9,9 +9,7 @@ import com.FoodOrdering.OrderUp.Model.payload.request.AddItemRequest;
 import com.FoodOrdering.OrderUp.Model.payload.request.EditItemRequest;
 import com.FoodOrdering.OrderUp.Model.payload.request.OnOffItemRequest;
 import com.FoodOrdering.OrderUp.Model.payload.request.OrderRequest;
-import com.FoodOrdering.OrderUp.Model.payload.response.FoodOrderDTO;
-import com.FoodOrdering.OrderUp.Model.payload.response.GetItemDTO;
-import com.FoodOrdering.OrderUp.Model.payload.response.GetOrderDTO;
+import com.FoodOrdering.OrderUp.Model.payload.response.*;
 import com.FoodOrdering.OrderUp.MongoConfig.MongoConfig;
 import com.mongodb.client.*;
 import com.mongodb.client.model.*;
@@ -25,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -599,7 +598,103 @@ public void test(){
     }
 
 
+    public GetAllStatDTO getAllStat() {
 
+        long resCount=0;
+        long itemCount = 0;
+        long newResCount =0;
+        GetAllStatDTO getAllStatDTO= new GetAllStatDTO();
+
+        MongoDatabase database= mongoClient.getDatabase(db);
+        MongoCollection<Document> collection = database.getCollection("restaurants");
+         resCount = collection.countDocuments();
+        collection = database.getCollection("items");
+        itemCount = collection.countDocuments();
+        // Get the current date and time
+        LocalDateTime now = LocalDateTime.now();
+
+// Construct a filter to match documents with a "createDate" field in the current month
+//        Bson filter = Filters.and(
+//                Filters.eq("createDate.year", now.getYear()),
+//                Filters.eq("createDate.month", now.getMonthValue())
+//        );
+// Get the start of the current month
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date startOfMonth = cal.getTime();
+
+// Get the start of the next month
+        cal.add(Calendar.MONTH, 1);
+        Date startOfNextMonth = cal.getTime();
+
+// Construct a filter to match documents with a "createDate" field in the current month
+        Bson filter = Filters.and(
+                Filters.gte("createDate", startOfMonth),
+                Filters.lt("createDate", startOfNextMonth)
+        );
+
+
+// Count the documents matching the filter
+       collection = database.getCollection("restaurants");
+        newResCount= collection.countDocuments(filter);
+
+        getAllStatDTO.setItemCount(itemCount);
+        getAllStatDTO.setNewResCount(newResCount);
+        getAllStatDTO.setResCount(resCount);
+
+        return getAllStatDTO;
+    }
+
+    public List<RestaurantDTO> getAllRes() {
+
+        List<RestaurantDTO> restaurantDTOS = new ArrayList<>();
+
+        MongoDatabase database= mongoClient.getDatabase(db);
+        MongoCollection<Document> collection =  database.getCollection("restaurants");
+        Bson filter = Filters.eq("role","MANAGER");
+        FindIterable<Document> findIterable= collection.find(filter);
+        MongoCursor<Document> cursor= findIterable.cursor();
+
+
+
+
+        return  restaurantDTOS;
+    }
+
+
+
+    public RestaurantDTO docToRestaurantDTO(Document document){
+        RestaurantDTO restaurantDTO= new RestaurantDTO();
+
+        restaurantDTO.set_id(document.get("_id",ObjectId.class).toString());
+        restaurantDTO.setAddress(document.get("address",String.class));
+        restaurantDTO.setEmail(document.get("email",String.class));
+        restaurantDTO.setPhone(document.get("phone",String.class));
+        restaurantDTO.setName(document.get("name",String.class));
+
+        return restaurantDTO;
+    }
+
+    public boolean onoffRes(OnOffItemRequest onOffItemRequest) {
+
+        MongoDatabase database = mongoClient.getDatabase(db);
+        MongoCollection<Document> collection = database.getCollection("restaurants");
+
+        boolean status = onOffItemRequest.getStatus().equalsIgnoreCase("ON")? true: false;
+        Bson filter = Filters.eq("_id",new ObjectId(onOffItemRequest.get_id()));
+        Bson update = Updates.set("status",status);
+
+        UpdateResult updateResult= collection.updateOne(filter,update);
+
+        if(updateResult.getMatchedCount() == 1){
+            return true;
+        }
+        return  false;
+    }
 }
 
 

@@ -52,6 +52,7 @@ public class AuthenticationService {
             .phone(request.getPhone())
             .name(request.getName())
             .status(false)
+            .createDate(new Date())
             .expiredOTP(fiveMinutesLater)
             .otp(otp)
         .build();
